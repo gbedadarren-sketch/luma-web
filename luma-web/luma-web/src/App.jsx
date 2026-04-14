@@ -3,10 +3,14 @@ import { AuthProvider, useAuth } from './hooks/useAuth'
 import Landing from './pages/Landing'
 import AuthPage from './pages/Auth'
 import Dashboard from './pages/Dashboard'
+import WidgetWrapper from './components/WidgetWrapper'
 
 function AppContent() {
   const { user, loading } = useAuth()
   const [showAuth, setShowAuth] = useState(false)
+
+  // Check if opened as widget (e.g. via ?widget=1 in URL)
+  const isWidget = new URLSearchParams(window.location.search).get('widget') === '1'
 
   if (loading) return (
     <div style={{
@@ -22,10 +26,12 @@ function AppContent() {
     </div>
   )
 
-  // Logged in → show dashboard
-  if (user) return <Dashboard />
+  if (user) return (
+    <WidgetWrapper mode={isWidget ? 'widget' : 'full'}>
+      <Dashboard />
+    </WidgetWrapper>
+  )
 
-  // Not logged in
   if (showAuth) return <AuthPage onBack={() => setShowAuth(false)} />
 
   return <Landing onGetStarted={() => setShowAuth(true)} />
