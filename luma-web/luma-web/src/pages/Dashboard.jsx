@@ -14,7 +14,6 @@ const Icon = ({ d, size = 16 }) => (
 
 export default function Dashboard() {
   const { user, signOut } = useAuth()
-  const [apiKey, setApiKey] = useLocalStorage('luma_api_key', '')
   const [activeTab, setActiveTab] = useState('chat')
   const [sources, setSources] = useLocalStorage('luma_sources', [])
   const [kbText, setKbText] = useLocalStorage('luma_kb_text', '')
@@ -91,8 +90,6 @@ export default function Dashboard() {
   async function handleFileUpload(e) {
     const file = e.target.files[0]
     if (!file) return
-    if (!apiKey) { setUploadError('Add your API key in Settings first'); setShowAddSource(true); return }
-
     setUploadLoading(true)
     setUploadError('')
     try {
@@ -102,7 +99,7 @@ export default function Dashboard() {
         reader.onerror = rej
         reader.readAsDataURL(file)
       })
-      const text = await extractPdfText({ apiKey, base64 })
+      const text = await extractPdfText({ base64 })
       const name = file.name.replace(/\.[^.]+$/, '')
       addSource(name, text)
     } catch (err) {
@@ -145,8 +142,6 @@ export default function Dashboard() {
   // ── CHAT ─────────────────────────────────────────────────────
   async function sendMessage(q = input.trim()) {
     if (!q || sending) return
-    if (!apiKey) { setShowSettings(true); return }
-
     setInput('')
     setSending(true)
 
@@ -164,7 +159,6 @@ export default function Dashboard() {
         .map(m => ({ role: m.role, content: m.content }))
 
       const answer = await callClaude({
-        apiKey,
         system,
         messages: [...history, { role: 'user', content: q }],
         maxTokens: 800,
@@ -434,7 +428,6 @@ export default function Dashboard() {
             onUpload={() => fileInputRef.current?.click()}
             uploadLoading={uploadLoading}
             uploadError={uploadError}
-            apiKey={apiKey}
           />
         )}
 
@@ -459,7 +452,7 @@ export default function Dashboard() {
 
       {/* SETTINGS MODAL */}
       <Modal open={showSettings} onClose={() => setShowSettings(false)} title="Settings">
-        <SettingsPanel apiKey={apiKey} onSave={key => { setApiKey(key); setShowSettings(false) }} onSignOut={signOut} />
+        <SettingsPanel onSignOut={signOut} />
       </Modal>
     </div>
   )
@@ -556,7 +549,7 @@ function MarkdownText({ text }) {
 }
 
 // ── SOURCES PANEL ─────────────────────────────────────────────
-function SourcesPanel({ sources, onAddPaste, onRemove, onUpload, uploadLoading, uploadError, apiKey }) {
+function SourcesPanel({ sources, onAddPaste, onRemove, onUpload, uploadLoading, uploadError }) {
   const [pasteText, setPasteText] = useState('')
   const [sourceName, setSourceName] = useState('')
   const [pasteError, setPasteError] = useState('')
@@ -632,7 +625,6 @@ function SourcesPanel({ sources, onAddPaste, onRemove, onUpload, uploadLoading, 
             )}
           </div>
           {uploadError && <p style={{ fontSize: '12px', color: 'var(--red)', marginTop: '6px' }}>{uploadError}</p>}
-          {!apiKey && <p style={{ fontSize: '11px', color: 'var(--amber)', marginTop: '6px' }}>⚠ Add API key in Settings to enable PDF extraction</p>}
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
@@ -758,17 +750,19 @@ function StatusPanel({ confusion, onSetConfusion }) {
 }
 
 // ── SETTINGS PANEL ────────────────────────────────────────────
-function SettingsPanel({ apiKey, onSave, onSignOut }) {
-  const [key, setKey] = useState(apiKey)
-  const [status, setStatus] = useState('')
+function SettingsPanel({ onSignOut }) {
   const [testing, setTesting] = useState(false)
+  const [status, setStatus] = useState('')
 
   async function handleTest() {
-    if (!key) return
     setTesting(true); setStatus('')
     try {
-      const result = await callClaude({ apiKey: key, messages: [{ role: 'user', content: 'Reply: working!' }], system: 'Reply with just: working!', maxTokens: 20 })
-      setStatus(result.includes('working') ? '✓ Connected!' : '✓ API key works')
+      const result = await callClaude({
+        messages: [{ role: 'user', content: 'Reply with just: working!' }],
+        system: 'Reply with just: working!',
+        maxTokens: 20,
+      })
+      setStatus(result.includes('working') ? '✓ AI is connected and working!' : '✓ Connected')
     } catch (e) {
       setStatus('✗ ' + e.message)
     } finally { setTesting(false) }
@@ -777,24 +771,11 @@ function SettingsPanel({ apiKey, onSave, onSignOut }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <div>
-        <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '8px' }}>
-          Claude API Key
-        </label>
-        <input
-          type="password"
-          value={key}
-          onChange={e => setKey(e.target.value)}
-          placeholder="sk-ant-api03-…"
-          style={{ fontFamily: 'monospace', fontSize: '12px', marginBottom: '8px' }}
-        />
-        <p style={{ fontSize: '11px', color: 'var(--text3)', marginBottom: '12px' }}>
-          Get your key at <a href="https://console.anthropic.com" target="_blank" rel="noreferrer" style={{ color: 'var(--accent2)' }}>console.anthropic.com</a>
+        <p style={{ fontSize: '13px', color: 'var(--text2)', marginBottom: '12px' }}>
+          AI is powered by Claude and managed by Luma — no setup needed.
         </p>
         {status && <p style={{ fontSize: '12px', color: status.startsWith('✓') ? 'var(--green)' : 'var(--red)', marginBottom: '10px' }}>{status}</p>}
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <Button onClick={() => onSave(key.trim())} disabled={!key.trim()}>Save key</Button>
-          <Button variant="ghost" onClick={handleTest} loading={testing} disabled={!key.trim()}>Test</Button>
-        </div>
+        <Button variant="ghost" onClick={handleTest} loading={testing}>Test AI connection</Button>
       </div>
       <div style={{ borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
         <Button variant="danger" size="sm" onClick={onSignOut}>Sign out</Button>
