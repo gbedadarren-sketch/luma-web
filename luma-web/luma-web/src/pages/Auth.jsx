@@ -1,147 +1,83 @@
 import { useState } from 'react'
-import { Button, Input, Divider } from '../components/UI'
-import { useAuth } from '../hooks/useAuth'
+import { supabase } from '../lib/supabase'
 
-export default function AuthPage({ onBack }) {
-  const [mode, setMode] = useState('signin') // signin | signup
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
-  const { signIn, signUp } = useAuth()
+const S = {
+  page: { minHeight: '100vh', background: '#080810', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'system-ui, sans-serif', padding: '1rem' },
+    card: { background: '#10101e', border: '1px solid #1e1e3a', borderRadius: '1rem', padding: '2.5rem 2rem', width: '100%', maxWidth: '420px' },
+      logo: { width: 48, height: 48, background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 700, color: '#fff', margin: '0 auto 1.5rem' },
+        title: { color: '#fff', fontSize: '1.6rem', fontWeight: 700, textAlign: 'center', marginBottom: '.4rem' },
+          subtitle: { color: '#6b7280', fontSize: '.9rem', textAlign: 'center', marginBottom: '2rem' },
+            label: { display: 'block', color: '#9ca3af', fontSize: '.85rem', marginBottom: '.4rem' },
+              input: { width: '100%', background: '#1a1a2e', border: '1px solid #2d2d4a', borderRadius: '.5rem', padding: '.75rem 1rem', color: '#fff', fontSize: '1rem', outline: 'none', boxSizing: 'border-box', marginBottom: '1.1rem' },
+                roleRow: { display: 'flex', gap: '.75rem', marginBottom: '1.1rem' },
+                  roleBtn: (active) => ({ flex: 1, padding: '.75rem', borderRadius: '.5rem', border: '2px solid', borderColor: active ? '#7c3aed' : '#2d2d4a', background: active ? 'rgba(124,58,237,.15)' : 'transparent', color: active ? '#a78bfa' : '#6b7280', cursor: 'pointer', fontWeight: 600, fontSize: '.9rem' }),
+                    btn: { width: '100%', padding: '.85rem', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', border: 'none', borderRadius: '.5rem', fontSize: '1rem', fontWeight: 600, cursor: 'pointer', marginBottom: '1.25rem' },
+                      toggle: { color: '#7c3aed', background: 'none', border: 'none', cursor: 'pointer', fontSize: '.9rem', fontWeight: 600 },
+                        toggleRow: { textAlign: 'center', color: '#6b7280', fontSize: '.9rem' },
+                          error: { background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.3)', borderRadius: '.5rem', padding: '.75rem 1rem', color: '#f87171', fontSize: '.875rem', marginBottom: '1rem' },
+                            success: { background: 'rgba(34,197,94,.1)', border: '1px solid rgba(34,197,94,.3)', borderRadius: '.5rem', padding: '.75rem 1rem', color: '#4ade80', fontSize: '.875rem', marginBottom: '1rem' },
+                              back: { display: 'block', textAlign: 'center', marginTop: '1.5rem', color: '#4b5563', fontSize: '.85rem', textDecoration: 'none' },
+                              }
 
-  async function handleSubmit(e) {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
-    try {
-      if (mode === 'signin') {
-        const { error } = await signIn(email, password)
-        if (error) throw error
-      } else {
-        const { error } = await signUp(email, password)
-        if (error) throw error
-        setSuccess(true)
-      }
-    } catch (err) {
-      setError(err.message || 'Something went wrong')
-    } finally {
-      setLoading(false)
-    }
-  }
+                              export default function Auth() {
+                                const [mode, setMode] = useState('signin')
+                                  const [role, setRole] = useState('student')
+                                    const [email, setEmail] = useState('')
+                                      const [password, setPassword] = useState('')
+                                        const [name, setName] = useState('')
+                                          const [loading, setLoading] = useState(false)
+                                            const [error, setError] = useState('')
+                                              const [message, setMessage] = useState('')
 
-  return (
-    <div style={{
-      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: '24px', position: 'relative',
-    }}>
-      {/* Background */}
-      <div style={{
-        position: 'fixed', top: '-100px', left: '50%', transform: 'translateX(-50%)',
-        width: '600px', height: '400px',
-        background: 'radial-gradient(ellipse, rgba(124,111,255,0.1) 0%, transparent 70%)',
-        pointerEvents: 'none',
-      }} />
+                                                async function handleSubmit(e) {
+                                                    e.preventDefault()
+                                                        setError(''); setMessage(''); setLoading(true)
+                                                            try {
+                                                                  if (mode === 'signin') {
+                                                                          const { error } = await supabase.auth.signInWithPassword({ email, password })
+                                                                                  if (error) throw error
+                                                                                        } else {
+                                                                                                const { error } = await supabase.auth.signUp({ email, password, options: { data: { role, full_name: name } } })
+                                                                                                        if (error) throw error
+                                                                                                                setMessage('Check your email to confirm your account, then sign in.')
+                                                                                                                        setMode('signin')
+                                                                                                                              }
+                                                                                                                                  } catch (err) { setError(err.message) } finally { setLoading(false) }
+                                                                                                                                    }
 
-      <div style={{ width: '100%', maxWidth: '400px', position: 'relative', zIndex: 1 }}>
-
-        {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: '40px', animation: 'fadeUp 0.4s ease' }}>
-          <div style={{
-            width: '48px', height: '48px',
-            background: 'var(--accent)', borderRadius: '12px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '22px', color: '#fff',
-            margin: '0 auto 16px',
-          }}>L</div>
-          <h1 style={{
-            fontFamily: 'var(--font-display)', fontSize: '26px', fontWeight: 800,
-            letterSpacing: '-0.5px', marginBottom: '6px',
-          }}>
-            {mode === 'signin' ? 'Welcome back' : 'Create your account'}
-          </h1>
-          <p style={{ color: 'var(--text2)', fontSize: '14px', fontWeight: 300 }}>
-            {mode === 'signin' ? 'Sign in to your Luma account' : 'Start studying smarter today'}
-          </p>
-        </div>
-
-        {success ? (
-          <div style={{
-            background: 'rgba(62,207,142,0.08)', border: '1px solid rgba(62,207,142,0.2)',
-            borderRadius: 'var(--radius)', padding: '20px', textAlign: 'center',
-            animation: 'fadeUp 0.3s ease',
-          }}>
-            <div style={{ fontSize: '24px', marginBottom: '10px' }}>✉️</div>
-            <p style={{ fontWeight: 500, marginBottom: '6px' }}>Check your email</p>
-            <p style={{ fontSize: '13px', color: 'var(--text2)' }}>
-              We sent a confirmation link to <strong>{email}</strong>
-            </p>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} style={{
-            background: 'var(--bg2)', border: '1px solid var(--border)',
-            borderRadius: 'var(--radius-lg)', padding: '28px',
-            animation: 'fadeUp 0.4s 0.05s ease both',
-            display: 'flex', flexDirection: 'column', gap: '16px',
-          }}>
-            <Input
-              label="Email"
-              type="email"
-              placeholder="you@indiana.edu"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-            />
-            <Input
-              label="Password"
-              type="password"
-              placeholder={mode === 'signup' ? 'At least 8 characters' : '••••••••'}
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-              autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-            />
-
-            {error && (
-              <div style={{
-                background: 'rgba(255,85,85,0.08)', border: '1px solid rgba(255,85,85,0.2)',
-                borderRadius: 'var(--radius-sm)', padding: '10px 14px',
-                fontSize: '13px', color: 'var(--red)',
-              }}>{error}</div>
-            )}
-
-            <Button type="submit" loading={loading} style={{ width: '100%', justifyContent: 'center' }}>
-              {mode === 'signin' ? 'Sign in' : 'Create account'} →
-            </Button>
-
-            <Divider label="or" />
-
-            <div style={{ textAlign: 'center', fontSize: '13px', color: 'var(--text2)' }}>
-              {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
-              <button
-                type="button"
-                onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError('') }}
-                style={{
-                  background: 'none', border: 'none', color: 'var(--accent2)',
-                  cursor: 'pointer', fontSize: '13px', fontWeight: 500,
-                  fontFamily: 'var(--font-body)',
-                }}
-              >
-                {mode === 'signin' ? 'Sign up' : 'Sign in'}
-              </button>
-            </div>
-          </form>
-        )}
-
-        <div style={{ textAlign: 'center', marginTop: '20px' }}>
-          <button onClick={onBack} style={{
-            background: 'none', border: 'none', color: 'var(--text3)',
-            fontSize: '13px', cursor: 'pointer', fontFamily: 'var(--font-body)',
-          }}>← Back to home</button>
-        </div>
-      </div>
-    </div>
-  )
-}
+                                                                                                                                      return (
+                                                                                                                                          <div style={S.page}>
+                                                                                                                                                <div style={S.card}>
+                                                                                                                                                        <div style={S.logo}>L</div>
+                                                                                                                                                                <h1 style={S.title}>{mode === 'signin' ? 'Welcome back' : 'Create account'}</h1>
+                                                                                                                                                                        <p style={S.subtitle}>{mode === 'signin' ? 'Sign in to your Luma account' : 'Join Luma and start studying smarter'}</p>
+                                                                                                                                                                                {error && <div style={S.error}>{error}</div>}
+                                                                                                                                                                                        {message && <div style={S.success}>{message}</div>}
+                                                                                                                                                                                                <form onSubmit={handleSubmit}>
+                                                                                                                                                                                                          {mode === 'signup' && (
+                                                                                                                                                                                                                      <>
+                                                                                                                                                                                                                                    <label style={S.label}>Full name</label>
+                                                                                                                                                                                                                                                  <input style={S.input} type="text" placeholder="Your name" value={name} onChange={e => setName(e.target.value)} required />
+                                                                                                                                                                                                                                                                <label style={S.label}>I am a...</label>
+                                                                                                                                                                                                                                                                              <div style={S.roleRow}>
+                                                                                                                                                                                                                                                                                              <button type="button" style={S.roleBtn(role === 'student')} onClick={() => setRole('student')}>Student</button>
+                                                                                                                                                                                                                                                                                                              <button type="button" style={S.roleBtn(role === 'professor')} onClick={() => setRole('professor')}>Professor</button>
+                                                                                                                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                                                                                                                                        </>
+                                                                                                                                                                                                                                                                                                                                                  )}
+                                                                                                                                                                                                                                                                                                                                                            <label style={S.label}>Email</label>
+                                                                                                                                                                                                                                                                                                                                                                      <input style={S.input} type="email" placeholder="you@indiana.edu" value={email} onChange={e => setEmail(e.target.value)} required />
+                                                                                                                                                                                                                                                                                                                                                                                <label style={S.label}>Password</label>
+                                                                                                                                                                                                                                                                                                                                                                                          <input style={S.input} type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} />
+                                                                                                                                                                                                                                                                                                                                                                                                    <button style={S.btn} type="submit" disabled={loading}>{loading ? 'Loading...' : mode === 'signin' ? 'Sign in' : 'Create account'}</button>
+                                                                                                                                                                                                                                                                                                                                                                                                            </form>
+                                                                                                                                                                                                                                                                                                                                                                                                                    <div style={S.toggleRow}>
+                                                                                                                                                                                                                                                                                                                                                                                                                              {mode === 'signin' ? <>Don't have an account? <button style={S.toggle} onClick={() => { setMode('signup'); setError('') }}>Sign up</button></>
+                                                                                                                                                                                                                                                                                                                                                                                                                                          : <>Already have an account? <button style={S.toggle} onClick={() => { setMode('signin'); setError('') }}>Sign in</button></>}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                  </div>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                          <a href="/" style={S.back}>Back to home</a>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                      )
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                      }
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
