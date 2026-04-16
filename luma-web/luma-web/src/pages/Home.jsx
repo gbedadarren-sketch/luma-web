@@ -222,7 +222,7 @@ export default function Home({ user }) {
             </p>
           </div>
 
-          role === 'professor' ? (
+          {role === 'professor' ? (
             <button style={S.primaryBtn} onClick={() => setShowCreate(true)}>+ Create course</button>
           ) : (
             <form onSubmit={handleJoin} style={S.joinRow}>
