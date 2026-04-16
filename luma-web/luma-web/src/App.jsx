@@ -37,7 +37,7 @@ function ProtectedRoute({ children, user }) {
                                                                                     return (
                                                                                         <BrowserRouter>
                                                                                               <Routes>
-                                                                                                      <Route path="/" element={<Landing />} />
+                                                                                                      <Route path="/" element={<Landing onGetStarted={() => window.location.href='/auth'} />} />
                                                                                                               <Route path="/auth" element={user ? <Navigate to="/home" replace /> : <Auth />} />
                                                                                                                       <Route path="/home" element={<ProtectedRoute user={user}><Home user={user} /></ProtectedRoute>} />
                                                                                                                               <Route path="/class/:id" element={<ProtectedRoute user={user}><ClassRoom user={user} /></ProtectedRoute>} />
