@@ -334,7 +334,7 @@ Be helpful, clear, and encouraging. Answer questions based on the provided mater
           {activeTab === 'status' && (
             <div style={C.panel}>
               <h2 style={C.panelTitle}>Understanding Check</h2>
-              <p style={C.panelSub}>How&�ell are you following?</p>
+              <p style={C.panelSub}>How well are you following?</p>
               <div style={C.statusGrid}>{STATUS_OPTIONS.map(opt => (<div key={opt.id} style={C.statusCard(myStatus === opt.id, opt.color)} onClick={() => saveStatus(opt.id)}><div style={C.statusEmoji}>{opt.emoji}</div><div style={C.statusLabel(myStatus === opt.id, opt.color)}>{opt.label}</div></div>))}</div>
               {myStatus && (<p style={{ color: '#6b7280', fontSize: '.875rem', textAlign: 'center', marginTop: '1.5rem' }}>Status: <strong style={{ color: '#a78bfa' }}>{STATUS_OPTIONS.find(o => o.id === myStatus)?.label}</strong></p>)}
             </div>
