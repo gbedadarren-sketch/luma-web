@@ -20,4 +20,3 @@ export async function callClaude(messages, system = 'You are Luma, an AI study a
                                                 const data = await res.json()
                                                   return data.text || ''
                                                   }
-}
